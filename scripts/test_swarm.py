@@ -12,11 +12,11 @@ TAKEOFF_DURATION    = 1
 DISPERSE_DURATION   = 1
 MOVE_DURATION       = 0.5
 LAND_DURATION       = 1
-SIMULATION          = False
-PRINTS              = False
+SIMULATION          = True
+PRINTS              = True
 initMap             = None
 posInit             = []
-mapBounds           = [40, 10] 
+mapBounds           = [11, 11]
 
 class HiddenPrints:
     def __enter__(self):
@@ -35,21 +35,26 @@ def getColors(cfs):
 def disperse(cfs, timeHelper):
     global posInit
     posSet = set()
-    while not len(posSet) == len(cfs):
-        pos = [(random.choice([1, mapBounds[0]-1]), random.randint(2, mapBounds[1]-2), 1), (random.randint(2, mapBounds[0]-2), random.choice([1, mapBounds[1]-1]), 1)]
-        pos = random.choice(pos)
-        posSet.add(pos)
+    # while not len(posSet) == len(cfs):
+    #     pos = [(random.choice([1, mapBounds[0]-1]), random.randint(2, mapBounds[1]-2), 1), (random.randint(2, mapBounds[0]-2), random.choice([1, mapBounds[1]-1]), 1)]
+    #     pos = random.choice(pos)
+    #     posSet.add(pos)
+    # posInit = posSet.copy()
+    posSet = [[random.randint(2, mapBounds[0]-2), 1, 1],
+              [1, random.randint(2, mapBounds[1]-2), 1],
+              [random.randint(2, mapBounds[0]-2), mapBounds[0]-1, 1],
+              [mapBounds[0]-1, random.randint(2, mapBounds[1]-2), 1]]
     print("posSet:",posSet)
-    posInit = posSet.copy()
-    posSet = {(1, 2, 1), (11, 9, 1), (14, 9, 1), (1, 4, 1), (39, 6, 1)}
 
-    for cf in cfs:
-        pos = np.array(posSet.pop())
+    for i,cf in enumerate(cfs):
+        # pos = np.array(posSet.pop())
+        pos = np.asarray(posSet[i])
+        print("pos:",pos)
         if SIMULATION:
             cf.goTo(goal=pos.astype(float), yaw=0, duration=DISPERSE_DURATION)
-            timeHelper.sleep(DISPERSE_DURATION)
         else:
             cf.updatePos(pos.astype(float))
+        timeHelper.sleep(DISPERSE_DURATION)
         cf.sense()
 
 def adjustDir(cfs):
@@ -146,8 +151,6 @@ def task():
             updateMap(cfs)
             updateMap(cfs)
             print(map)
-            print(cfs[0].dir, cfs[1].dir)
-            print(cfs[0].state.pos, cfs[1].state.pos)
             if stopCondition(cfs):
                 break
 

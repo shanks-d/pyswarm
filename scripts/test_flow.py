@@ -33,10 +33,9 @@ def move(pos):
         timeHelper.sleep(MOVE_DURATION + HOVER_DURATION)
 
 def main():
-    print("initialPosition:",cfs[0].initialPosition)
     takeoff()
-    move([1, 0, 0.5])
-    move([1, 1, 0.5])
+    # move([0, 0.75, 0.5])
+    # move([0.75, 0.75, 0.5])
     land()
 
 if __name__ == "__main__":

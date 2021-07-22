@@ -67,7 +67,7 @@ class TimeHelper:
 
         #############################################################
 
-        if trail and vis == "mpl":
+        if trail:
             self.visualizer.updatePlot(self.crazyflies)
 
         #############################################################

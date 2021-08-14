@@ -174,7 +174,10 @@ class Crazyflie:
     MODE_LOW_VELOCITY = 4
 
 
-    def __init__(self, id, initialPosition, timeHelper):
+    def __init__(self, id, initialPosition, timeHelper, map):
+
+        # map
+        self.map = map
 
         # Core.
         self.id = id
@@ -440,9 +443,20 @@ class Crazyflie:
     def _isGroup(self, groupMask):
         return groupMask == 0 or (self.groupMask & groupMask) > 0
 
+    ######################################################################################
+
+    def sense(self):
+        _left = (self.map[int(self.state.pos[1])][:int(self.state.pos[0])] == 0).sum()
+        _right = (self.map[int(self.state.pos[1])][int(self.state.pos[0]+1):] == 0).sum()
+        _front = (self.map[int(self.state.pos[0])][:int(self.state.pos[1])] == 0).sum()
+        _back = (self.map[int(self.state.pos[0])][int(self.state.pos[1]+1):] == 0).sum()
+        return _left, _right, _front, _back
+
+    ######################################################################################
+
 
 class CrazyflieServer:
-    def __init__(self, timeHelper, crazyflies_yaml="../launch/crazyflies.yaml"):
+    def __init__(self, map, timeHelper, crazyflies_yaml="../launch/crazyflies.yaml"):
         """Initialize the server.
 
         Args:
@@ -462,12 +476,13 @@ class CrazyflieServer:
         for crazyflie in cfg["crazyflies"]:
             id = int(crazyflie["id"])
             initialPosition = crazyflie["initialPosition"]
-            cf = Crazyflie(id, initialPosition, timeHelper)
+            cf = Crazyflie(id, initialPosition, timeHelper, map)
             self.crazyflies.append(cf)
             self.crazyfliesById[id] = cf
 
         self.timeHelper = timeHelper
         self.timeHelper.crazyflies = self.crazyflies
+
 
     def emergency(self):
         print("WARNING: emergency not implemented in simulation!")

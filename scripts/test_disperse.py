@@ -6,16 +6,16 @@ import numpy as np
 import random
 
 
+TAKEOFF_DURATION = 2.0
+DISPERSE_DURATION = 3.0 
+
+
 def disperse(cfs, timeHelper):
-    for cf in cfs:
-        posX, posY, posZ = np.array(cf.state.pos)
-        X, Y, Z = random.random(), random.random(), 0
-        while posX >= 0 and posY >= 0 and posX <= 10 and posY <= 10:
-            posX, posY, posZ = np.array(cf.state.pos) + np.array([X, Y, 0])
-            pos = np.array([posX, posY, posZ])
-            print(pos)
-            cf.cmdPosition(pos)
-            timeHelper.sleep(0.1)
+    pos1 = np.array([9, random.randint(1,8), 0])
+    pos2 = np.array([random.randint(1,8), 9, 0])
+    cfs[0].goTo(goal=pos1, yaw=0, duration=DISPERSE_DURATION)
+    cfs[1].goTo(goal=pos2, yaw=0, duration=DISPERSE_DURATION)
+    timeHelper.sleep(DISPERSE_DURATION)
 
 
 if __name__ == "__main__":
@@ -27,17 +27,17 @@ if __name__ == "__main__":
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
-    swarm.allcfs.takeoff(targetHeight=1.0, duration=1.0)
-    timeHelper.sleep(2)
+    swarm.allcfs.takeoff(targetHeight=1.0, duration=TAKEOFF_DURATION)
+    timeHelper.sleep(TAKEOFF_DURATION)
     disperse(cfs, timeHelper)
+    # wait()    # Not needed in simulation
 
-    print(map)
-    left, right, front, back = cfs[0].sense()
-    print(left, right, front, back)
+    map[int(cfs[0].state.pos[0])][int(cfs[0].state.pos[1])] = 1
+    map[int(cfs[1].state.pos[0])][int(cfs[1].state.pos[1])] = 2
+    print(map)    
+    cfs[0].sense()
+    print(cfs[0].frontBound)
 
-    # takeoff()
-    # disperse()
-    # wait()
     # while 1:
     #     check()
     #     move()

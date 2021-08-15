@@ -176,8 +176,12 @@ class Crazyflie:
 
     def __init__(self, id, initialPosition, timeHelper, map):
 
+        ############################################################
         # map
         self.map = map
+        self.frontBound, self.backBound, self.leftBound, self.rightBound = 0,0,0,0
+
+        ############################################################
 
         # Core.
         self.id = id
@@ -446,11 +450,11 @@ class Crazyflie:
     ######################################################################################
 
     def sense(self):
-        _left = (self.map[int(self.state.pos[1])][:int(self.state.pos[0])] == 0).sum()
-        _right = (self.map[int(self.state.pos[1])][int(self.state.pos[0]+1):] == 0).sum()
-        _front = (self.map[int(self.state.pos[0])][:int(self.state.pos[1])] == 0).sum()
-        _back = (self.map[int(self.state.pos[0])][int(self.state.pos[1]+1):] == 0).sum()
-        return _left, _right, _front, _back
+        self.frontBound = (self.map[int(self.state.pos[1])][:int(self.state.pos[0])] == 0).sum()
+        self.backBound = (self.map[int(self.state.pos[1])][int(self.state.pos[0]+1):] == 0).sum()
+        self.leftBound = (self.map[int(self.state.pos[0])][:int(self.state.pos[1])] == 0).sum()
+        self.rightBound = (self.map[int(self.state.pos[0])][int(self.state.pos[1]+1):] == 0).sum()
+        # return _front, _back, _left, _right
 
     ######################################################################################
 

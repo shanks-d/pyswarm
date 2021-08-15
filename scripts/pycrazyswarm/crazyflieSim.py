@@ -177,9 +177,15 @@ class Crazyflie:
     def __init__(self, id, initialPosition, timeHelper, map):
 
         ############################################################
-        # map
+        # Map
         self.map = map
+
+        # Sensor data
         self.frontBound, self.backBound, self.leftBound, self.rightBound = 0,0,0,0
+
+        # Bound following
+        self.case = 0   # Left Front Back Right
+        self.move = 0   # 0 = Left, 1 = Front, 2 = Back, 3 = Right
 
         ############################################################
 
@@ -450,12 +456,56 @@ class Crazyflie:
     ######################################################################################
 
     def sense(self):
-        self.frontBound = (self.map[int(self.state.pos[1])][:int(self.state.pos[0])] == 0).sum()
-        self.backBound = (self.map[int(self.state.pos[1])][int(self.state.pos[0]+1):] == 0).sum()
-        self.leftBound = (self.map[int(self.state.pos[0])][:int(self.state.pos[1])] == 0).sum()
-        self.rightBound = (self.map[int(self.state.pos[0])][int(self.state.pos[1]+1):] == 0).sum()
-        # return _front, _back, _left, _right
+        # Distance of bounds from pos
+        pos = np.asarray(self.state.pos)
+        pos0, pos1, pos2, pos3 = pos, pos, pos, pos
+        count0, count1, count2, count3 = 0, 0, 0, 0
+        breakFlag0, breakFlag1, breakFlag2, breakFlag3 = False, False, False, False
+        # print(self.state.pos)
+        while 1:
+            if self.map[int(pos0[0])][int(pos0[1])-1] == 0 and self.map[int(pos0[0])][int(pos0[1])-1] != float('inf'):
+                count0 += 1
+                pos0 = pos0 - np.array([0, 1, 0])
+                breakFlag0 = False
+            else:
+                breakFlag0 = True
 
+            if self.map[int(pos1[0])-1][int(pos1[1])] == 0 and self.map[int(pos1[0])-1][int(pos1[1])] != float('inf'):
+                count1 += 1
+                pos1 = pos1 - np.array([1, 0, 0])
+                breakFlag1 = False
+            else:
+                breakFlag1 = True
+
+            if self.map[int(pos2[0])+1][int(pos2[1])] == 0 and self.map[int(pos2[0])+1][int(pos2[1])] != float('inf'):
+                count2 += 1
+                pos2 = pos2 + np.array([1, 0, 0])
+                breakFlag2 = False
+            else:
+                breakFlag2 = True
+
+            if self.map[int(pos3[0])][int(pos3[1])+1] == 0 and self.map[int(pos3[0])][int(pos3[1])+1] != float('inf'):
+                count3 += 1
+                pos3 = pos3 + np.array([0, 1, 0])
+                breakFlag3 = False
+            else:
+                breakFlag3 = True
+
+            # print(count0,count1,count2,count3)
+            # print(breakFlag0,breakFlag1,breakFlag2,breakFlag3)
+            if breakFlag0 and breakFlag1 and breakFlag2 and breakFlag3:
+                break
+
+        self.leftBound = count0
+        self.frontBound = count1
+        self.backBound = count2
+        self.rightBound = count3
+
+        # 0: Bound and 1: No Bound
+        bound = np.array([self.leftBound, self.frontBound, self.backBound, self.rightBound])
+        bound[bound != 0] = 1
+        self.case = bound[0]*1000 + bound[1]*100 + bound[2]*10 + bound[3]
+        
     ######################################################################################
 
 

@@ -505,7 +505,12 @@ class Crazyflie:
         bound = np.array([self.leftBound, self.frontBound, self.backBound, self.rightBound])
         bound[bound != 0] = 1
         self.case = bound[0]*1000 + bound[1]*100 + bound[2]*10 + bound[3]
-        
+
+    def updateMap(self, k):
+        x = int(round(self.state.pos[0]))
+        y = int(round(self.state.pos[1]))
+        self.map[x][y] = k
+    
     ######################################################################################
 
 

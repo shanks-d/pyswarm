@@ -6,37 +6,36 @@ import numpy as np
 import random
 
 
-TAKEOFF_DURATION = 2.0
-DISPERSE_DURATION = 3.0
-MOVE_DURATION = 1.0
-RETURN_DURATION = 3.0
-LAND_DURATION = 2.0
+TAKEOFF_DURATION = 1.0
+DISPERSE_DURATION = 1.0
+MOVE_DURATION = 0.5
+RETURN_DURATION = 1.0
+LAND_DURATION = 1.0
 
 
 def disperse(cfs, timeHelper):
     pos = np.array([9, random.randint(1,8), 1])
     cfs[0].goTo(goal=pos, yaw=0, duration=DISPERSE_DURATION)
     timeHelper.sleep(DISPERSE_DURATION)
+    cfs[0].sense()
 
-def updateMap(cfs, map):
+def updateMap(cfs):
     for k,cf in enumerate(cfs):
-        map[int(cfs[k].state.pos[0])][int(cfs[k].state.pos[1])] = k+1
+        cf.updateMap(k+1)
+
+def printMap(cfs):
+    for cf in cfs:
+        print(cf.map)
 
 def stopCondition(cfs):
-    cfs[0].sense()
-    print(cfs[0].leftBound)
-    print(cfs[0].frontBound)
-    print(cfs[0].backBound)
-    print(cfs[0].rightBound)
-    print(cfs[0].case)
     if cfs[0].case == 0:
+        print("stop")
         return True
     else:
         return False
 
 def check(cfs):
-    cfs[0].sense()
-    print("checking case")
+    print("checking case",cfs[0].case)
     
     if cfs[0].case == 1110:
         cfs[0].move = 2
@@ -68,21 +67,26 @@ def check(cfs):
         print("No condition for case =",cfs[0].case)
 
 def move(cfs):
-    pos = np.asarray(cfs[0].state.pos)
+    pos = np.asarray(cfs[0].state.pos).round()
 
     print(pos)
     if cfs[0].move == 0:
-        pos[1] -= 1
+        pos[1] -= 1.0
     elif cfs[0].move == 1:
-        pos[0] -= 1
+        pos[0] -= 1.0
     elif cfs[0].move == 2:
-        pos[0] += 1
+        pos[0] += 1.0
     else:
-        pos[1] += 1
+        pos[1] += 1.0
 
     print(pos)
     cfs[0].goTo(goal=pos, yaw=0, duration=MOVE_DURATION)
     timeHelper.sleep(MOVE_DURATION)
+    cfs[0].sense()
+    # print("leftBound =",cfs[0].leftBound)
+    # print("frontBound =",cfs[0].frontBound)
+    # print("backBound =",cfs[0].backBound)
+    # print("rightBound =",cfs[0].rightBound)
 
 
 if __name__ == "__main__":
@@ -98,26 +102,27 @@ if __name__ == "__main__":
     timeHelper.sleep(TAKEOFF_DURATION)
     disperse(cfs, timeHelper)
     # wait()    # Not needed in simulation
+ 
+    updateMap(cfs)
+    printMap(cfs)
 
-    updateMap(cfs, map)
-    print(map)
-
-
-    while not stopCondition(cfs):
+    while 1:
         check(cfs)
         move(cfs)
     #     broadcast()
-        updateMap(cfs, map)
-        print(map)
+        updateMap(cfs)
+        printMap(cfs)
+        if stopCondition(cfs):
+            break
     
-    # hover
-    print("Press button to continue...")
-    swarm.input.waitUntilButtonPressed()
+    # # hover
+    # print("Press button to continue...")
+    # swarm.input.waitUntilButtonPressed()
 
-    pos = cfs[0].initialPosition
-    pos[2] = 1
-    cfs[0].goTo(goal=pos, yaw=0, duration=RETURN_DURATION)
-    timeHelper.sleep(RETURN_DURATION)
+    # pos = cfs[0].initialPosition
+    # pos[2] = 1
+    # cfs[0].goTo(goal=pos, yaw=0, duration=RETURN_DURATION)
+    # timeHelper.sleep(RETURN_DURATION)
 
-    swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
-    timeHelper.sleep(LAND_DURATION)
+    # swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
+    # timeHelper.sleep(LAND_DURATION)

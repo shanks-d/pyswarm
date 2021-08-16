@@ -15,7 +15,7 @@ LAND_DURATION = 1.0
 
 def disperse(cfs, timeHelper):
     pos = np.array([9, random.randint(1,8), 1])
-    cfs[0].goTo(goal=pos, yaw=0, duration=DISPERSE_DURATION)
+    cfs[0].goTo(goal=pos.astype(float), yaw=0, duration=DISPERSE_DURATION)
     timeHelper.sleep(DISPERSE_DURATION)
     cfs[0].sense()
 
@@ -115,14 +115,14 @@ if __name__ == "__main__":
         if stopCondition(cfs):
             break
     
-    # # hover
-    # print("Press button to continue...")
-    # swarm.input.waitUntilButtonPressed()
+    # hover
+    print("Press any button to land...")
+    swarm.input.waitUntilButtonPressed()
 
-    # pos = cfs[0].initialPosition
-    # pos[2] = 1
-    # cfs[0].goTo(goal=pos, yaw=0, duration=RETURN_DURATION)
-    # timeHelper.sleep(RETURN_DURATION)
+    pos = cfs[0].initialPosition
+    pos[2] = 1.0
+    cfs[0].goTo(goal=pos, yaw=0, duration=RETURN_DURATION)
+    timeHelper.sleep(RETURN_DURATION)
 
-    # swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
-    # timeHelper.sleep(LAND_DURATION)
+    swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
+    timeHelper.sleep(LAND_DURATION)

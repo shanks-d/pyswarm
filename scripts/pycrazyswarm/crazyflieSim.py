@@ -184,8 +184,9 @@ class Crazyflie:
         self.frontBound, self.backBound, self.leftBound, self.rightBound = 0,0,0,0
 
         # Bound following
-        self.case = 0   # Left Front Back Right
-        self.move = 0   # 0 = Left, 1 = Front, 2 = Back, 3 = Right
+        self.case = np.array([1, 1, 1, 1])   # Left Front Right Back
+        self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**
+        self.dir = 1    # Initially faced front   **wrt world**
 
         ############################################################
 
@@ -502,15 +503,31 @@ class Crazyflie:
         self.rightBound = count3
 
         # 0: Bound and 1: No Bound
-        bound = np.array([self.leftBound, self.frontBound, self.backBound, self.rightBound])
+        bound = np.array([self.leftBound, self.frontBound, self.rightBound, self.backBound])
         bound[bound != 0] = 1
-        self.case = bound[0]*1000 + bound[1]*100 + bound[2]*10 + bound[3]
+
+        if self.dir == 0:
+            self.case = np.roll(bound, 1)
+        elif self.dir == 2:
+            self.case = np.roll(bound, -1)
+        elif self.dir == 3:
+            self.case = np.roll(bound, 2)
+        else:
+            self.case = bound
 
     def updateMap(self, k):
         x = int(round(self.state.pos[0]))
         y = int(round(self.state.pos[1]))
         self.map[x][y] = k
-    
+
+    def updateDir(self, change):
+        if self.dir + change == 4:
+            self.dir = 0
+        elif self.dir + change == -1:
+            self.dir = 3
+        else:
+            self.dir += change
+        
     ######################################################################################
 
 

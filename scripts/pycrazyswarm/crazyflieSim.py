@@ -12,10 +12,10 @@ from .cfsim import cffirmware as firm
 # also does the plotting.
 #
 class TimeHelper:
-    def __init__(self, vis, dt, writecsv, disturbanceSize, maxVel=np.inf, videopath=None):
+    def __init__(self, plotDim, vis, dt, writecsv, disturbanceSize, maxVel=np.inf, videopath=None):
         if vis == "mpl":
             from .visualizer import visMatplotlib
-            self.visualizer = visMatplotlib.VisMatplotlib()
+            self.visualizer = visMatplotlib.VisMatplotlib(plotDim)
         elif vis == "vispy":
             from .visualizer import visVispy
             resizable = videopath is None

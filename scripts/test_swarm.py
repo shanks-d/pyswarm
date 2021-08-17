@@ -13,6 +13,11 @@ RETURN_DURATION = 1.0
 LAND_DURATION = 1.0
 
 
+def getColors(cfs):
+    for cf in cfs:
+        r,g,b = random.random(), random.random(), random.random()
+        cf.setLEDColor(r,g,b)
+
 def disperse(cfs, timeHelper):
     posDict = {}
     if len(cfs) == 1:
@@ -114,6 +119,7 @@ if __name__ == "__main__":
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
+    getColors(cfs)
     swarm.allcfs.takeoff(targetHeight=1.0, duration=TAKEOFF_DURATION)
     timeHelper.sleep(TAKEOFF_DURATION)
     disperse(cfs, timeHelper)

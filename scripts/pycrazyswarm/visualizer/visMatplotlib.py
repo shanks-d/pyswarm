@@ -7,11 +7,11 @@ import numpy as np
 
 
 class VisMatplotlib:
-    def __init__(self):
+    def __init__(self, plotDim):
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
-        self.ax.set_xlim([-5, 5])
-        self.ax.set_ylim([-5, 5])
+        self.ax.set_xlim(plotDim[0])
+        self.ax.set_ylim(plotDim[1])
         self.ax.set_zlim([0, 3])
         self.ax.set_xlabel("X")
         self.ax.set_ylabel("Y")

@@ -181,12 +181,12 @@ class Crazyflie:
         self.map = map
 
         # Sensor data
-        self.frontBound, self.backBound, self.leftBound, self.rightBound = 0,0,0,0
+        self.case = np.array([1, 1, 1, 1])   # Left Front Right Back
 
         # Bound following
-        self.case = np.array([1, 1, 1, 1])   # Left Front Right Back
         self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**
         self.dir = 1    # Initially faced front   **wrt world**
+        self.stop = False
 
         ############################################################
 
@@ -457,54 +457,19 @@ class Crazyflie:
     ######################################################################################
 
     def sense(self):
-        # Distance of bounds from pos
+        # Presence of bounds adjacent to pos
         pos = np.asarray(self.state.pos)
-        pos0, pos1, pos2, pos3 = pos, pos, pos, pos
-        count0, count1, count2, count3 = 0, 0, 0, 0
-        breakFlag0, breakFlag1, breakFlag2, breakFlag3 = False, False, False, False
-        # print(self.state.pos)
-        while 1:
-            if self.map[int(pos0[0])][int(pos0[1])-1] == 0 and self.map[int(pos0[0])][int(pos0[1])-1] != float('inf'):
-                count0 += 1
-                pos0 = pos0 - np.array([0, 1, 0])
-                breakFlag0 = False
-            else:
-                breakFlag0 = True
-
-            if self.map[int(pos1[0])-1][int(pos1[1])] == 0 and self.map[int(pos1[0])-1][int(pos1[1])] != float('inf'):
-                count1 += 1
-                pos1 = pos1 - np.array([1, 0, 0])
-                breakFlag1 = False
-            else:
-                breakFlag1 = True
-
-            if self.map[int(pos2[0])+1][int(pos2[1])] == 0 and self.map[int(pos2[0])+1][int(pos2[1])] != float('inf'):
-                count2 += 1
-                pos2 = pos2 + np.array([1, 0, 0])
-                breakFlag2 = False
-            else:
-                breakFlag2 = True
-
-            if self.map[int(pos3[0])][int(pos3[1])+1] == 0 and self.map[int(pos3[0])][int(pos3[1])+1] != float('inf'):
-                count3 += 1
-                pos3 = pos3 + np.array([0, 1, 0])
-                breakFlag3 = False
-            else:
-                breakFlag3 = True
-
-            # print(count0,count1,count2,count3)
-            # print(breakFlag0,breakFlag1,breakFlag2,breakFlag3)
-            if breakFlag0 and breakFlag1 and breakFlag2 and breakFlag3:
-                break
-
-        self.leftBound = count0
-        self.frontBound = count1
-        self.backBound = count2
-        self.rightBound = count3
-
         # 0: Bound and 1: No Bound
-        bound = np.array([self.leftBound, self.frontBound, self.rightBound, self.backBound])
-        bound[bound != 0] = 1
+        bound = np.array([0, 0, 0, 0])
+
+        if self.map[int(pos[0])][int(pos[1])-1] == 0:
+            bound[0] = 1
+        if self.map[int(pos[0])-1][int(pos[1])] == 0:
+            bound[1] = 1
+        if self.map[int(pos[0])][int(pos[1])+1] == 0:
+            bound[2] = 1
+        if self.map[int(pos[0])+1][int(pos[1])] == 0:
+            bound[3] = 1
 
         if self.dir == 0:
             self.case = np.roll(bound, 1)

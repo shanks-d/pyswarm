@@ -19,32 +19,19 @@ def getColors(cfs):
         cf.setLEDColor(r,g,b)
 
 def disperse(cfs, timeHelper):
-    posDict = {}
-    if len(cfs) == 1:
-        posDict[0] = np.array([random.choice([1,9]), random.randint(1,9), 1])
-    elif len(cfs) == 2:
-        posDict[0] = np.array([1, random.randint(1,9), 1])
-        posDict[1] = np.array([9, random.randint(1,9), 1])
-    elif len(cfs) == 3:
-        posDict[0] = np.array([1, random.randint(1,9), 1])
-        posDict[1] = np.array([9, random.randint(1,9), 1])
-        posDict[2] = np.array([random.randint(1,9), 1, 1])
-    elif len(cfs) == 4:
-        posDict[0] = np.array([1, random.randint(1,9), 1])
-        posDict[1] = np.array([9, random.randint(1,9), 1])
-        posDict[2] = np.array([random.randint(1,9), 1, 1])
-        posDict[3] = np.array([random.randint(1,9), 9, 1])
-    else:
-        print("Work in progress")
+    posSet = set()
+    while not len(posSet) == len(cfs):
+        pos = (random.choice([1,9]), random.randint(1,9), 1)
+        posSet.add(pos)
 
-    for k,cf in enumerate(cfs):
-        pos = posDict.get(k)
+    for cf in cfs:
+        pos = np.array(posSet.pop())
         cf.goTo(goal=pos.astype(float), yaw=0, duration=DISPERSE_DURATION)
         
         # In the scope of for loop to prevent collision while dispersing
         timeHelper.sleep(DISPERSE_DURATION)
         cf.sense()
-    print("posDict:",posDict)
+    print("posSet:",posSet)
 
 def adjustDir(cfs):
     for cf in cfs:

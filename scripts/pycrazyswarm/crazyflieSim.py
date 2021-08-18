@@ -59,11 +59,18 @@ class TimeHelper:
 
     # should be called "animate" or something
     # but called "sleep" for source-compatibility with real-robot scripts
-    def sleep(self, duration):
+    def sleep(self, duration, trail=False):
         # operator // has unexpected (wrong ?) behavior for this calculation.
         ticks = math.floor((duration + self.sleepResidual) / self.dt)
         self.sleepResidual += duration - self.dt * ticks
         assert -1e-9 <= self.sleepResidual < self.dt
+
+        #############################################################
+
+        if trail:
+            self.visualizer.updatePlot(self.crazyflies)
+
+        #############################################################
 
         for _ in range(int(ticks)):
             self.visualizer.update(self.t, self.crazyflies)

@@ -16,6 +16,7 @@ LAND_DURATION = 1.0
 def getColors(cfs):
     for cf in cfs:
         r,g,b = random.random(), random.random(), random.random()
+        print(cf.id,(r+g+b))
         cf.setLEDColor(r,g,b)
 
 def disperse(cfs, timeHelper):
@@ -95,7 +96,7 @@ def move(cfs):
                 cf.updateDir(1)
             
             cf.goTo(goal=pos, yaw=0, duration=MOVE_DURATION)
-    timeHelper.sleep(MOVE_DURATION)
+    timeHelper.sleep(MOVE_DURATION, trail=True)
 
 
 if __name__ == "__main__":
@@ -126,6 +127,9 @@ if __name__ == "__main__":
         if stopCondition(cfs):
             break
     
+    print("Press any button to land...")
+    swarm.input.waitUntilButtonPressed()
+
     swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
     timeHelper.sleep(LAND_DURATION)
 

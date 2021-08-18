@@ -26,6 +26,7 @@ class VisMatplotlib:
         self.graph_lines = None
         self.graph = None
 
+
     def setGraph(self, edges):
         """Set edges of graph visualization - sequence of (i,j) tuples."""
 
@@ -79,3 +80,22 @@ class VisMatplotlib:
     def render(self):
         warnings.warn("Rendering video not supported in VisMatplotlib yet.")
         return None
+
+    ######################################################################
+
+    def updatePlot(self, crazyflies):
+        xs = []
+        ys = []
+        zs = []
+        cs = []
+        for cf in crazyflies:
+            x, y, z = cf.position()
+            color = cf.ledRGB
+            xs.append(x)
+            ys.append(y)
+            zs.append(z)
+            cs.append(color)
+
+        self.plot = self.ax.scatter(xs, ys, zs, c=cs)
+
+    ######################################################################

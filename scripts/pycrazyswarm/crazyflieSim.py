@@ -499,6 +499,9 @@ class Crazyflie:
             self.dir = 3
         else:
             self.dir += change
+
+    def updatePos(self, goal):
+        self.state.pos = firm.mkvec(*goal)
         
     ######################################################################################
 

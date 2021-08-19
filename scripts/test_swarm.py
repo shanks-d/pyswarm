@@ -8,11 +8,10 @@ import random
 import sys, os
 
 
-TAKEOFF_DURATION = 1
-DISPERSE_DURATION = 1
-MOVE_DURATION = 0.5
-RETURN_DURATION = 1
-LAND_DURATION = 1
+TAKEOFF_DURATION    = 1
+DISPERSE_DURATION   = 1
+MOVE_DURATION       = 0.5
+LAND_DURATION       = 1
 simulation = True
 
 
@@ -28,7 +27,6 @@ class HiddenPrints:
 def getColors(cfs):
     for cf in cfs:
         r,g,b = random.random(), random.random(), random.random()
-        print(cf.id,(r+g+b))
         cf.setLEDColor(r,g,b)
 
 def disperse(cfs, timeHelper):
@@ -37,6 +35,7 @@ def disperse(cfs, timeHelper):
         pos = [(random.choice([1,9]), random.randint(2,8), 1), (random.randint(2,8), random.choice([1,9]), 1)]
         pos = random.choice(pos)
         posSet.add(pos)
+    print("posSet:",posSet)
 
     for cf in cfs:
         pos = np.array(posSet.pop())
@@ -46,29 +45,27 @@ def disperse(cfs, timeHelper):
         else:
             cf.updatePos(pos.astype(float))
         cf.sense()
-    print("posSet:",posSet)
-
 
 def adjustDir(cfs):
     for cf in cfs:
-        if ((cf.case == [1, 1, 1, 0]).all()) or ((cf.case == [1, 1, 0, 0]).all()):
+        if cf.case[6] == 0 or (cf.case[4] == 0 and cf.case[6] == 0):
             cf.dir = 0
-        elif ((cf.case == [1, 1, 0, 1]).all()) or ((cf.case == [1, 0, 0, 1]).all()):
-            cf.dir = 3
-        elif ((cf.case == [1, 0, 1, 1]).all()) or ((cf.case == [0, 0, 1, 1]).all()):
+        elif cf.case[4] == 0 or (cf.case[2] == 0 and cf.case[4] == 0):
+            cf.dir = 6
+        elif cf.case[2] == 0 or (cf.case[0] == 0 and cf.case[2] == 0):
+            cf.dir = 4
+        elif cf.case[0] == 0 or (cf.case[0] == 0 and cf.case[6] == 0):
             cf.dir = 2
-        elif ((cf.case == [0, 1, 1, 1]).all()) or ((cf.case == [0, 1, 1, 0]).all()):
-            cf.dir = 1
         else:
-            pass
             print("No wall near for drone id:",cf.id)
         # To adjust the case according to new Dir 
         cf.sense()
+        print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
 
 def updateMap(cfs):
-    for k,cf in enumerate(cfs):
+    for cf in cfs:
         cf.sense()
-        cf.updateMap(k+1)
+        cf.updateMap()
 
 def stopCondition(cfs):
     stopFlags = []
@@ -84,35 +81,27 @@ def stopCondition(cfs):
 def check(cfs):
     for cf in cfs:
         if cf.stop == False:
-            for k in range(3):
+            for k in range(8):
                 if cf.case[k] == 1:
                     cf.move = k
-                    print("Drone id:",cf.id,"case:",cf.case,"dir:",cf.dir,"move:",cf.move)
+                    print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
                     break
 
 def move(cfs,timeHelper):
     dronePos = set()
-    # active = len(cfs) - sum((cf.stop for cf in cfs))
-    for i, cf in enumerate(cfs):
+
+    for cf in cfs:
         if cf.stop == False:
             pos = np.asarray(cf.state.pos).round()
 
-            if (cf.dir == 3 and cf.move == 1) or (cf.dir == 0 and cf.move == 0) or (cf.dir == 2 and cf.move == 2):
-                pos[0] += 1.0
-            elif (cf.dir == 1 and cf.move == 1) or (cf.dir == 2 and cf.move == 0) or (cf.dir == 0 and cf.move == 2):
-                pos[0] -= 1.0
-            elif (cf.dir == 2 and cf.move == 1) or (cf.dir == 1 and cf.move == 2) or (cf.dir == 3 and cf.move == 0):
-                pos[1] += 1.0
-            elif (cf.dir == 0 and cf.move == 1) or (cf.dir == 1 and cf.move == 0) or (cf.dir == 3 and cf.move == 2):
-                pos[1] -= 1.0
-            else:
-                pass
-                print("Invalid move command")
+            # Find next pos relative to the current pos
+            newPos = cf.sense()
+            pos[0] += newPos[0]
+            pos[1] += newPos[1]
 
-            if cf.move == 0:
-                cf.updateDir(-1)
-            elif cf.move == 2:
-                cf.updateDir(1)
+            # Change the dir according to the move
+            newDir = cf.remapDir(cf.move)
+            cf.dir = cf.increment(cf.dir, newDir)
             
             prevLength = len(dronePos)
             dronePos.add(tuple(pos))
@@ -122,12 +111,6 @@ def move(cfs,timeHelper):
                     cf.goTo(goal=pos, yaw=0, duration=MOVE_DURATION)
                 else:
                     cf.updatePos(pos.astype(float))
-            else:
-                if simulation:
-                    cf.goTo(goal=cf.state.pos, yaw=0, duration=MOVE_DURATION)
-                else:
-                    cf.state.pos = cf.state.pos
-                dronePos.add(cf.state.pos)
     if simulation:
         timeHelper.sleep(MOVE_DURATION, trail=True)
 
@@ -161,6 +144,9 @@ def main():
             break
 
     if simulation:
+        # print("Press any button to land...")
+        # swarm.input.waitUntilButtonPressed()
+
         swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
         timeHelper.sleep(LAND_DURATION)
 

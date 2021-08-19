@@ -188,12 +188,14 @@ class Crazyflie:
         self.map = map
 
         # Sensor data
-        self.case = np.array([1, 1, 1, 1])   # Left Front Right Back
+        self.case = np.ones(8)   # Left Front Right Back
 
         # Bound following
         self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**
-        self.dir = 1    # Initially faced front   **wrt world**
+        self.dir = 2    # Initially faced front   **wrt world**
         self.stop = False
+        self.dirDict = {0:2, 1:1, 2:0, 3:-1, 4:-2, 5:-3, 6:4, 7:3}
+        self.posDict = {-1:[0,0], 0:[0,-1], 1:[-1,-1], 2:[-1,0], 3:[-1,1], 4:[0,1], 5:[1,1], 6:[1,0], 7:[1,-1]}
 
         ############################################################
 
@@ -463,42 +465,56 @@ class Crazyflie:
 
     ######################################################################################
 
+    def remapDir(self, x):
+        return self.dirDict[x]
+
+    def increment(self, index, changeFactor):
+        if index - changeFactor > 7:
+            return index - changeFactor - 8
+        elif index - changeFactor < 0:
+            return index - changeFactor + 8
+        else:
+            return index - changeFactor
+
     def sense(self):
         # Presence of bounds adjacent to pos
         pos = np.asarray(self.state.pos)
         # 0: Bound and 1: No Bound
-        bound = np.array([0, 0, 0, 0])
+        bound = np.zeros(8)
 
-        if self.map[int(pos[0])][int(pos[1])-1] == 0:
+        loc = self.map[int(pos[0])-1:int(pos[0])+2, int(pos[1])-1:int(pos[1]+2)].reshape(-1,)
+
+        if loc[3] == 0:
             bound[0] = 1
-        if self.map[int(pos[0])-1][int(pos[1])] == 0:
+        if loc[0] == 0:
             bound[1] = 1
-        if self.map[int(pos[0])][int(pos[1])+1] == 0:
+        if loc[1] == 0:
             bound[2] = 1
-        if self.map[int(pos[0])+1][int(pos[1])] == 0:
+        if loc[2] == 0:
             bound[3] = 1
-
-        if self.dir == 0:
-            self.case = np.roll(bound, 1)
-        elif self.dir == 2:
-            self.case = np.roll(bound, -1)
-        elif self.dir == 3:
-            self.case = np.roll(bound, 2)
+        if loc[5] == 0:
+            bound[4] = 1
+        if loc[8] == 0:
+            bound[5] = 1
+        if loc[7] == 0:
+            bound[6] = 1
+        if loc[6] == 0:
+            bound[7] = 1
+        
+        changeFactor = self.remapDir(self.dir)
+        self.case = np.roll(bound, changeFactor)
+        
+        if 1 in self.case:
+            moveIndex = (np.where(self.case == 1)[0][0])
+            posIndex = self.increment(moveIndex, changeFactor)
         else:
-            self.case = bound
+            posIndex = -1
+        return self.posDict[posIndex]
 
-    def updateMap(self, k):
+    def updateMap(self):
         x = int(round(self.state.pos[0]))
         y = int(round(self.state.pos[1]))
-        self.map[x][y] = k
-
-    def updateDir(self, change):
-        if self.dir + change == 4:
-            self.dir = 0
-        elif self.dir + change == -1:
-            self.dir = 3
-        else:
-            self.dir += change
+        self.map[x][y] = self.id
 
     def updatePos(self, goal):
         self.state.pos = firm.mkvec(*goal)

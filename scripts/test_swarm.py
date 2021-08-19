@@ -12,7 +12,7 @@ TAKEOFF_DURATION    = 1
 DISPERSE_DURATION   = 1
 MOVE_DURATION       = 0.5
 LAND_DURATION       = 1
-simulation = True
+simulation          = True
 
 
 class HiddenPrints:
@@ -114,8 +114,7 @@ def move(cfs,timeHelper):
     if simulation:
         timeHelper.sleep(MOVE_DURATION, trail=True)
 
-def main():
-    # with HiddenPrints():
+def task():
     arr = [0 if i>0 and i<10 and j>0 and j<10 else float('inf') for i in range(11) for j in range(11)]
     map = np.asarray(arr).reshape(11, 11)
     
@@ -156,6 +155,14 @@ def main():
     else:
         print("Task Failed")
         return False
+
+def main(prints=True):
+    if prints:
+        return task()
+    else:
+        with HiddenPrints():
+            return task()
+
 
 if __name__ == "__main__":
 

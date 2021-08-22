@@ -12,8 +12,11 @@ TAKEOFF_DURATION    = 1
 DISPERSE_DURATION   = 1
 MOVE_DURATION       = 0.5
 LAND_DURATION       = 1
-simulation          = True
-
+SIMULATION          = False
+PRINTS              = False
+initMap             = None
+posInit             = []
+mapBounds           = [40, 10] 
 
 class HiddenPrints:
     def __enter__(self):
@@ -30,16 +33,19 @@ def getColors(cfs):
         cf.setLEDColor(r,g,b)
 
 def disperse(cfs, timeHelper):
+    global posInit
     posSet = set()
     while not len(posSet) == len(cfs):
-        pos = [(random.choice([1,9]), random.randint(2,8), 1), (random.randint(2,8), random.choice([1,9]), 1)]
+        pos = [(random.choice([1, mapBounds[0]-1]), random.randint(2, mapBounds[1]-2), 1), (random.randint(2, mapBounds[0]-2), random.choice([1, mapBounds[1]-1]), 1)]
         pos = random.choice(pos)
         posSet.add(pos)
     print("posSet:",posSet)
+    posInit = posSet.copy()
+    posSet = {(1, 2, 1), (11, 9, 1), (14, 9, 1), (1, 4, 1), (39, 6, 1)}
 
     for cf in cfs:
         pos = np.array(posSet.pop())
-        if simulation:
+        if SIMULATION:
             cf.goTo(goal=pos.astype(float), yaw=0, duration=DISPERSE_DURATION)
             timeHelper.sleep(DISPERSE_DURATION)
         else:
@@ -107,57 +113,76 @@ def move(cfs,timeHelper):
             dronePos.add(tuple(pos))
 
             if len(dronePos) != prevLength:
-                if simulation:
+                if SIMULATION:
                     cf.goTo(goal=pos, yaw=0, duration=MOVE_DURATION)
                 else:
                     cf.updatePos(pos.astype(float))
-    if simulation:
+    if SIMULATION:
         timeHelper.sleep(MOVE_DURATION, trail=True)
 
 def task():
-    arr = [0 if i>0 and i<10 and j>0 and j<10 else float('inf') for i in range(11) for j in range(11)]
-    map = np.asarray(arr).reshape(11, 11)
+    arr = [0 if i>0 and i<mapBounds[0] and j>0 and j<mapBounds[1] else float('inf') for i in range(mapBounds[0] + 1) for j in range(mapBounds[1] + 1)]
+    map = np.asarray(arr).reshape(mapBounds[0]+1, mapBounds[1]+1)
     
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
     getColors(cfs)
-    if simulation:
+    if SIMULATION:
         swarm.allcfs.takeoff(targetHeight=1.0, duration=TAKEOFF_DURATION)
         timeHelper.sleep(TAKEOFF_DURATION)
     disperse(cfs, timeHelper)
-    adjustDir(cfs)
-    # wait()    # Not needed in simulation
-    
-    updateMap(cfs)
-    updateMap(cfs)
-    print(map)
-
+    iter = 0
     while 1:
-        check(cfs)
-        move(cfs, timeHelper)
+        adjustDir(cfs)
+        # wait()    # Not needed in SIMULATION
+        
         updateMap(cfs)
         updateMap(cfs)
-        print(map)
-        if stopCondition(cfs):
-            break
+        initMap = map.copy()
+        while 1:
+            check(cfs)
+            move(cfs, timeHelper)
+            updateMap(cfs)
+            updateMap(cfs)
+            print(map)
+            print(cfs[0].dir, cfs[1].dir)
+            print(cfs[0].state.pos, cfs[1].state.pos)
+            if stopCondition(cfs):
+                break
 
-    if simulation:
-        # print("Press any button to land...")
-        # swarm.input.waitUntilButtonPressed()
+        if len(np.where(map == 0)[0]) == 0:
+            if SIMULATION:
+                swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
+                timeHelper.sleep(LAND_DURATION)
+            print("Task Completed")
+            return True, None
+        else:
+            print("Task Failed on first iteration")
+            leftover = np.where(map == 0)
+            leftover = [(float(leftover[0][i]), float(leftover[1][i]), 1.0) for i in range(len(leftover[0]))]
+            if len(leftover) > 1:
+                cfs[0].stop, cfs[1].stop = False, False
+                if SIMULATION:
+                    cfs[0].goTo(goal=leftover[0], yaw=0, duration=MOVE_DURATION)
+                    cfs[1].goTo(goal=leftover[-1], yaw=0, duration=MOVE_DURATION)
+                    timeHelper.sleep(MOVE_DURATION, trail=True)
+                else:
+                    cfs[0].updatePos(leftover[0])
+                    cfs[1].updatePos(leftover[-1])
+            else:
+                iter += 1
+                if iter == 2:
+                    return False, posInit
+                cfs[0].stop = False
+                if SIMULATION:
+                    cfs[0].goTo(goal=leftover[0], yaw=0, duration=MOVE_DURATION)
+                    timeHelper.sleep(MOVE_DURATION, trail=True)
+                else:
+                    cfs[0].updatePos(leftover[0])
 
-        swarm.allcfs.land(targetHeight=0.0, duration=LAND_DURATION)
-        timeHelper.sleep(LAND_DURATION)
-
-    if len(np.where(map == 0)[0]) == 0:
-        print("Task Completed")
-        return True
-    else:
-        print("Task Failed")
-        return False
-
-def main(prints=True):
-    if prints:
+def main():
+    if PRINTS:
         return task()
     else:
         with HiddenPrints():

@@ -67,7 +67,7 @@ class TimeHelper:
 
         #############################################################
 
-        if trail:
+        if trail and vis == "mpl":
             self.visualizer.updatePlot(self.crazyflies)
 
         #############################################################
@@ -189,6 +189,7 @@ class Crazyflie:
 
         # Sensor data
         self.case = np.ones(8)   # Left Front Right Back
+        self.pose = np.zeros(3)
 
         # Bound following
         self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**

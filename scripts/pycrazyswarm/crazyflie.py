@@ -61,7 +61,7 @@ class Crazyflie:
     The bulk of the module's functionality is contained in this class.
     """
 
-    def __init__(self, id, initialPosition, tf):
+    def __init__(self, id, initialPosition, tf, map):
         """Constructor.
 
         Args:
@@ -73,6 +73,23 @@ class Crazyflie:
             tf (tf.TransformListener): ROS TransformListener used to query the
                 robot's current state.
         """
+
+        ############################################################
+        # Map
+        self.map = map
+
+        # Sensor data
+        self.case = np.ones(8)   # Left Front Right Back
+        self.pose = np.zeros(3)
+
+        # Bound following
+        self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**
+        self.dir = 2    # Initially faced front   **wrt world**
+        self.stop = False
+        self.dirDict = {0:2, 1:1, 2:0, 3:-1, 4:-2, 5:-3, 6:4, 7:3}
+        self.posDict = {-1:[0,0], 0:[0,-1], 1:[-1,-1], 2:[-1,0], 3:[-1,1], 4:[0,1], 5:[1,1], 6:[1,0], 7:[1,-1]}
+
+        ############################################################
         self.id = id
         prefix = "/cf" + str(id)
         self.prefix = prefix
@@ -542,6 +559,64 @@ class Crazyflie:
         self.setParam("ring/solidGreen", int(g * 255))
         self.setParam("ring/solidBlue", int(b * 255))
 
+    ######################################################################################
+
+    def remapDir(self, x):
+        return self.dirDict[x]
+
+    def increment(self, index, changeFactor):
+        if index - changeFactor > 7:
+            return index - changeFactor - 8
+        elif index - changeFactor < 0:
+            return index - changeFactor + 8
+        else:
+            return index - changeFactor
+
+    def sense(self):
+        # Presence of bounds adjacent to pos
+        pos = self.pose
+        # 0: Bound and 1: No Bound
+        bound = np.zeros(8)
+
+        loc = self.map[int(pos[0])-1:int(pos[0])+2, int(pos[1])-1:int(pos[1]+2)].reshape(-1,)
+
+        if loc[3] == 0:
+            bound[0] = 1
+        if loc[0] == 0:
+            bound[1] = 1
+        if loc[1] == 0:
+            bound[2] = 1
+        if loc[2] == 0:
+            bound[3] = 1
+        if loc[5] == 0:
+            bound[4] = 1
+        if loc[8] == 0:
+            bound[5] = 1
+        if loc[7] == 0:
+            bound[6] = 1
+        if loc[6] == 0:
+            bound[7] = 1
+        
+        changeFactor = self.remapDir(self.dir)
+        self.case = np.roll(bound, changeFactor)
+        
+        if 1 in self.case:
+            moveIndex = (np.where(self.case == 1)[0][0])
+            posIndex = self.increment(moveIndex, changeFactor)
+        else:
+            posIndex = -1
+        return self.posDict[posIndex]
+
+    def updateMap(self):
+        x = int(round(self.pose[0]))
+        y = int(round(self.pose[1]))
+        self.map[x][y] = self.id
+
+    def updatePos(self, goal):
+        self.pose = firm.mkvec(*goal)
+        
+    ######################################################################################
+
 
 class CrazyflieServer:
     """Object for broadcasting commands to all robots at once.
@@ -554,7 +629,7 @@ class CrazyflieServer:
         crazyfliesById (Dict[int, Crazyflie]): Index to the same Crazyflie
             objects by their ID number (last byte of radio address).
     """
-    def __init__(self, crazyflies_yaml="../launch/crazyflies.yaml"):
+    def __init__(self, map, crazyflies_yaml="../launch/crazyflies.yaml"):
         """Initialize the server. Waits for all ROS services before returning.
 
         Args:
@@ -563,6 +638,7 @@ class CrazyflieServer:
                 from file. Otherwise, interpret as YAML string and parse
                 directly from string.
         """
+        self.map = map
         rospy.init_node("CrazyflieAPI", anonymous=False)
         rospy.wait_for_service("/emergency")
         self.emergencyService = rospy.ServiceProxy("/emergency", Empty)
@@ -592,7 +668,7 @@ class CrazyflieServer:
         for crazyflie in cfg["crazyflies"]:
             id = int(crazyflie["id"])
             initialPosition = crazyflie["initialPosition"]
-            cf = Crazyflie(id, initialPosition, self.tf)
+            cf = Crazyflie(id, initialPosition, self.tf, map)
             self.crazyflies.append(cf)
             self.crazyfliesById[id] = cf
 

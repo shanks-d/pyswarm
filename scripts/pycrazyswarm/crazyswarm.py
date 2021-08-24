@@ -27,8 +27,6 @@ def build_argparser(parent_parsers=[]):
 
 class Crazyswarm:
     def __init__(self, map=None, crazyflies_yaml=None, parent_parser=None, args=None):
-        # if map is None:
-        #     map = []
         if parent_parser is not None:
             parents = [parent_parser]
         else:
@@ -54,7 +52,7 @@ class Crazyswarm:
             atexit.register(self.timeHelper._atexit)
         else:
             from .crazyflie import TimeHelper, CrazyflieServer    
-            self.allcfs = CrazyflieServer(crazyflies_yaml)
+            self.allcfs = CrazyflieServer(map, crazyflies_yaml)
             self.timeHelper = TimeHelper()
             if args.writecsv:
                 print("WARNING: writecsv argument ignored! This is only available in simulation.")

@@ -5,16 +5,16 @@ from math import fabs
 from pycrazyswarm import Crazyswarm
 import numpy as np
 import random
-
+from time import sleep
 
 # Map limits
 mapBounds           = [7, 7]
 
 # Drone attributes
 TAKEOFF_HEIGHT      = 1.0
-TAKEOFF_DURATION    = 3
-DISPERSE_DURATION   = 3
-MOVE_DURATION       = 3
+TAKEOFF_DURATION    = 5
+DISPERSE_DURATION   = 6
+MOVE_DURATION       = 2
 LAND_HEIGHT         = 0.1
 LAND_DURATION       = 3
 
@@ -47,11 +47,12 @@ def disperse(cfs, timeHelper):
         posSet.add(pos)
     print("posSet:",posSet)
     
-    for cf in cfs:
+    for iter, cf in enumerate(cfs):
         pos = np.array(posSet.pop())
         cf.pose = pos.astype(float)        
         cf.goTo(goal=scale2R(cf.pose), yaw=0, duration=DISPERSE_DURATION)
-        timeHelper.sleep(DISPERSE_DURATION)
+    
+    timeHelper.sleep(DISPERSE_DURATION)
 
 def adjustDir(cfs):
     for cf in cfs:
@@ -119,7 +120,8 @@ def move(cfs,timeHelper):
                 cf.goTo(goal=scale2R(cf.pose), yaw=0, duration=MOVE_DURATION)
     timeHelper.sleep(MOVE_DURATION)
 
-def stopSwarm(cfs):
+def stopSwarm(cfs, duration):
+    sleep(duration)
     for cf in cfs:
         cf.cmdStop()
 
@@ -130,14 +132,17 @@ def main():
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
-    getColors(cfs)
+    # getColors(cfs)
 
-    swarm.allcfs.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
+    # swarm.allcfs.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
+    # timeHelper.sleep(TAKEOFF_DURATION)
+
+    for iter, cf in enumerate(cfs):
+        cf.takeoff(TAKEOFF_HEIGHT + 0.3*iter, duration = TAKEOFF_DURATION)
     timeHelper.sleep(TAKEOFF_DURATION)
     
     disperse(cfs, timeHelper)
     iter = 0
-    
     while 1:
         adjustDir(cfs)
         updateMap(cfs)
@@ -176,9 +181,14 @@ def main():
                 cfs[0].goTo(goal=scale2R(leftover[0]), yaw=0, duration=MOVE_DURATION)
                 timeHelper.sleep(MOVE_DURATION)
     
-    swarm.allcfs.land(targetHeight=LAND_HEIGHT, duration=LAND_DURATION)
+    # swarm.allcfs.land(targetHeight=LAND_HEIGHT, duration=LAND_DURATION)
+    # timeHelper.sleep(LAND_DURATION)
+
+    for cf in cfs:
+        cf.land(targetHeight=LAND_HEIGHT, duration=LAND_DURATION)
     timeHelper.sleep(LAND_DURATION)
-    stopSwarm(cfs)
+    
+    stopSwarm(cfs, 2)
 
 
 if __name__ == "__main__":

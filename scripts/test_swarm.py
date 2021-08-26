@@ -16,7 +16,7 @@ SIMULATION          = True
 PRINTS              = True
 initMap             = None
 posInit             = []
-mapBounds           = [11, 11]
+mapBounds           = [10, 10]
 
 class HiddenPrints:
     def __enter__(self):
@@ -35,20 +35,15 @@ def getColors(cfs):
 def disperse(cfs, timeHelper):
     global posInit
     posSet = set()
-    # while not len(posSet) == len(cfs):
-    #     pos = [(random.choice([1, mapBounds[0]-1]), random.randint(2, mapBounds[1]-2), 1), (random.randint(2, mapBounds[0]-2), random.choice([1, mapBounds[1]-1]), 1)]
-    #     pos = random.choice(pos)
-    #     posSet.add(pos)
-    # posInit = posSet.copy()
-    posSet = [[random.randint(2, mapBounds[0]-2), 1, 1],
-              [1, random.randint(2, mapBounds[1]-2), 1],
-              [random.randint(2, mapBounds[0]-2), mapBounds[0]-1, 1],
-              [mapBounds[0]-1, random.randint(2, mapBounds[1]-2), 1]]
+    while not len(posSet) == len(cfs):
+        pos = [(random.choice([1, mapBounds[0]-2]), random.randint(2, mapBounds[1]-3), 1), (random.randint(2, mapBounds[0]-3), random.choice([1, mapBounds[1]-2]), 1)]
+        pos = random.choice(pos)
+        posSet.add(pos)
+    posInit = posSet.copy()
     print("posSet:",posSet)
 
     for i,cf in enumerate(cfs):
-        # pos = np.array(posSet.pop())
-        pos = np.asarray(posSet[i])
+        pos = np.array(posSet.pop())
         print("pos:",pos)
         if SIMULATION:
             cf.goTo(goal=pos.astype(float), yaw=0, duration=DISPERSE_DURATION)
@@ -126,8 +121,8 @@ def move(cfs,timeHelper):
         timeHelper.sleep(MOVE_DURATION, trail=True)
 
 def task():
-    arr = [0 if i>0 and i<mapBounds[0] and j>0 and j<mapBounds[1] else float('inf') for i in range(mapBounds[0] + 1) for j in range(mapBounds[1] + 1)]
-    map = np.asarray(arr).reshape(mapBounds[0]+1, mapBounds[1]+1)
+    arr = [0 if i>0 and i<mapBounds[0]-1 and j>0 and j<mapBounds[1]-1 else float('inf') for i in range(mapBounds[0]) for j in range(mapBounds[1])]
+    map = np.asarray(arr).reshape(mapBounds[0], mapBounds[1])
     
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper

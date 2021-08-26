@@ -1,4 +1,4 @@
-"""Physical implementation of spiral mapping algorithm"""
+"""Physical implementation of spiral mapping algorithm using FlowDeck"""
 
 
 from math import fabs
@@ -9,12 +9,12 @@ from time import sleep
 
 
 # Map limits
-mapBounds           = [9, 9]
+mapBounds           = [10, 10]
 
 # Drone attributes
 TAKEOFF_HEIGHT      = 0.4
 TAKEOFF_DURATION    = 2
-HOVER_DURATION      = 0
+HOVER_DURATION      = 1
 DISPERSE_DURATION   = 4
 MOVE_DURATION       = 2
 LAND_HEIGHT         = 0.05
@@ -27,26 +27,20 @@ def scale2R(pos):
     return pos*scale
 
 def disperse(cfs, timeHelper):
-    # posSet = {(1,1,1)}
     posSet = set()
     while not len(posSet) == len(cfs):
         pos = [(random.choice([1, mapBounds[0]-2]), random.randint(2, mapBounds[1]-3), 1), (random.randint(2, mapBounds[0]-3), random.choice([1, mapBounds[1]-2]), 1)]
         pos = random.choice(pos)
         posSet.add(pos)
     print("posSet:",posSet)
-    # posSet = [[random.randint(2, mapBounds[0]-2), 1, 1],
-    #           [1, random.randint(2, mapBounds[1]-2), 1],
-    #           [random.randint(2, mapBounds[0]-2), mapBounds[0]-1, 1],
-    #           [mapBounds[0]-1, random.randint(2, mapBounds[1]-2), 1]]
     
     for i,cf in enumerate(cfs):
-        # cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
-        # timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
+        cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
+        timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
         pos = np.array(posSet.pop())
-        # pos = np.asarray(posSet[i])
         cf.pose = pos.astype(float)        
         cf.goTo(goal=scale2R(cf.pose-cf.initialPosition), yaw=0, duration=DISPERSE_DURATION)
-    timeHelper.sleep(DISPERSE_DURATION + HOVER_DURATION)
+        timeHelper.sleep(DISPERSE_DURATION + HOVER_DURATION)
 
 def adjustDir(cfs):
     for cf in cfs:
@@ -115,14 +109,14 @@ def move(cfs,timeHelper):
     timeHelper.sleep(MOVE_DURATION)
 
 def takeoff(cfs, timeHelper):
-    for i, cf in enumerate(cfs):
-        cf.takeoff(targetHeight=TAKEOFF_HEIGHT + 0.2*i, duration=TAKEOFF_DURATION)
-        timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
+    for cf in cfs:
+        cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
+    timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
 
 def land(cfs, timeHelper):
     for cf in cfs:
         cf.land(targetHeight=LAND_HEIGHT, duration=LAND_DURATION)
-        timeHelper.sleep(LAND_DURATION)
+    timeHelper.sleep(LAND_DURATION)
 
 def stopSwarm(cfs):
     for cf in cfs:
@@ -137,7 +131,7 @@ def main():
     cfs = swarm.allcfs.crazyflies
 
     # Takeoff didn't work when swarm.allcfs.takeoff() was used
-    takeoff(cfs, timeHelper)
+    # takeoff(cfs, timeHelper)
     
     disperse(cfs, timeHelper)
     iter = 0

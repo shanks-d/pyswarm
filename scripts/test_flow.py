@@ -1,4 +1,4 @@
-"""Takeoff-hover-land for one CF. Useful to validate hardware config."""
+"""Control the swarm. Useful to find the scaling parameters."""
 
 from pycrazyswarm import Crazyswarm
 import numpy as np
@@ -34,8 +34,8 @@ def move(pos):
 
 def main():
     takeoff()
-    # move([0, 0.75, 0.5])
-    # move([0.75, 0.75, 0.5])
+    move([0, 0.75, 0.5])
+    move([0.75, 0.75, 0.5])
     land()
 
 if __name__ == "__main__":

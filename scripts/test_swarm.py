@@ -10,7 +10,7 @@ import sys, os
 
 TAKEOFF_DURATION    = 1
 DISPERSE_DURATION   = 1
-MOVE_DURATION       = 0.5
+MOVE_DURATION       = 1
 LAND_DURATION       = 1
 SIMULATION          = True
 PRINTS              = True

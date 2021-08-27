@@ -34,11 +34,6 @@ offset = r_hat_min - scale*r_min
 def scale2R(pos):
     return pos*scale + offset
 
-def getColors(cfs):
-    for cf in cfs:
-        r,g,b = random.random(), random.random(), random.random()
-        cf.setLEDColor(r,g,b)
-
 def disperse(cfs, timeHelper):
     posSet = set()
     while not len(posSet) == len(cfs):
@@ -47,11 +42,10 @@ def disperse(cfs, timeHelper):
         posSet.add(pos)
     print("posSet:",posSet)
     
-    for iter, cf in enumerate(cfs):
+    for cf in cfs:
         pos = np.array(posSet.pop())
         cf.pose = pos.astype(float)        
         cf.goTo(goal=scale2R(cf.pose), yaw=0, duration=DISPERSE_DURATION)
-    
     timeHelper.sleep(DISPERSE_DURATION)
 
 def adjustDir(cfs):
@@ -69,11 +63,9 @@ def adjustDir(cfs):
             print("No wall near for drone id:",cf.id)
         # To adjust the case according to new Dir 
         cf.sense()
-        print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
 
 def updateMap(cfs):
     for cf in cfs:
-        cf.sense()
         cf.updateMap()
 
 def stopCondition(cfs):
@@ -90,6 +82,7 @@ def stopCondition(cfs):
 def check(cfs):
     for cf in cfs:
         if cf.stop == False:
+            cf.sense()
             for k in range(8):
                 if cf.case[k] == 1:
                     cf.move = k
@@ -132,7 +125,6 @@ def main():
     swarm = Crazyswarm(map)
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
-    # getColors(cfs)
 
     # swarm.allcfs.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
     # timeHelper.sleep(TAKEOFF_DURATION)
@@ -146,13 +138,11 @@ def main():
     while 1:
         adjustDir(cfs)
         updateMap(cfs)
-        updateMap(cfs)
         print(map)
         
         while 1:
             check(cfs)
             move(cfs, timeHelper)
-            updateMap(cfs)
             updateMap(cfs)
             print(map)
             if stopCondition(cfs):

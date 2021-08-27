@@ -69,7 +69,6 @@ def adjustDir(cfs):
 
 def updateMap(cfs):
     for cf in cfs:
-        cf.sense()
         cf.updateMap()
 
 def stopCondition(cfs):
@@ -86,6 +85,7 @@ def stopCondition(cfs):
 def check(cfs):
     for cf in cfs:
         if cf.stop == False:
+            cf.sense()
             for k in range(8):
                 if cf.case[k] == 1:
                     cf.move = k
@@ -137,12 +137,10 @@ def task():
         # wait()    # Not needed in SIMULATION
         
         updateMap(cfs)
-        updateMap(cfs)
         initMap = map.copy()
         while 1:
             check(cfs)
             move(cfs, timeHelper)
-            updateMap(cfs)
             updateMap(cfs)
             print(map)
             if stopCondition(cfs):

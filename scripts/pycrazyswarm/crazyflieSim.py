@@ -188,14 +188,18 @@ class Crazyflie:
         self.map = map
 
         # Sensor data
-        self.case = np.ones(8)   # Left Front Right Back
-        self.pose = np.zeros(3)
+        # Left Left-Front Front Front-Right Right Right-Back Back Back-Left
+        self.case = np.ones(8)
 
         # Bound following
-        self.move = 0   # 0 = Left, 1 = Front, 2 = Right, 3 = Back  **wrt drone**
-        self.dir = 2    # Initially faced front   **wrt world**
+        # 0 = Left, 1 = Left-Front, 2 = Front, 3 = Front-Right and vice-versa **wrt drone**
+        self.move = 0
+        # Initially faced front   **wrt world**
+        self.dir = 2
         self.stop = False
+        # To compute the shift/increment factor based on the direction
         self.dirDict = {0:2, 1:1, 2:0, 3:-1, 4:-2, 5:-3, 6:4, 7:3}
+        # To find the goal position relative to the current position
         self.posDict = {-1:[0,0], 0:[0,-1], 1:[-1,-1], 2:[-1,0], 3:[-1,1], 4:[0,1], 5:[1,1], 6:[1,0], 7:[1,-1]}
 
         ############################################################
@@ -482,9 +486,9 @@ class Crazyflie:
         pos = np.asarray(self.state.pos)
         # 0: Bound and 1: No Bound
         bound = np.zeros(8)
-
+        # Extracting all the points in the map adjacent to the current position 
         loc = self.map[int(pos[0])-1:int(pos[0])+2, int(pos[1])-1:int(pos[1]+2)].reshape(-1,)
-
+        # Filling the bound data in correct order of priority L>F>R>B
         if loc[3] == 0:
             bound[0] = 1
         if loc[0] == 0:

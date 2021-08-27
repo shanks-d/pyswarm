@@ -1,4 +1,4 @@
-"""Takeoff-hover-land for one CF. Useful to validate hardware config."""
+"""Simulation of the spiral mapping algorithm. Useful to validate the performance."""
 
 
 from math import fabs
@@ -66,7 +66,6 @@ def adjustDir(cfs):
             print("No wall near for drone id:",cf.id)
         # To adjust the case according to new Dir 
         cf.sense()
-        print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
 
 def updateMap(cfs):
     for cf in cfs:

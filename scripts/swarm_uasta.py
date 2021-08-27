@@ -1,4 +1,4 @@
-"""Physical implementation of spiral mapping algorithm"""
+"""Physical implementation of spiral mapping algorithm using the Loco Positioning System in uASTA"""
 
 
 from math import fabs

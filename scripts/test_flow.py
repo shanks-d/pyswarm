@@ -20,7 +20,8 @@ cfs = swarm.allcfs.crazyflies
 def takeoff():
     for cf in cfs:
         cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
-        timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)        
+        # the drone actually moves when timeHelper.sleep is called
+        timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
 
 def land():
     for cf in cfs:

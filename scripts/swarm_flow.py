@@ -12,7 +12,7 @@ from time import sleep
 mapBounds           = [10, 10]
 
 # Drone attributes
-TAKEOFF_HEIGHT      = 0.4
+TAKEOFF_HEIGHT      = 0.5
 TAKEOFF_DURATION    = 2
 HOVER_DURATION      = 1
 DISPERSE_DURATION   = 4
@@ -26,6 +26,7 @@ scale = np.array([0.75, 0.75, 0.5])
 def scale2R(pos):
     return pos*scale
 
+# Selecting a unique random start points close to a bound for each drone
 def disperse(cfs, timeHelper):
     posSet = set()
     while not len(posSet) == len(cfs):
@@ -34,14 +35,17 @@ def disperse(cfs, timeHelper):
         posSet.add(pos)
     print("posSet:",posSet)
     
-    for i,cf in enumerate(cfs):
+    for cf in cfs:
+        # If collision avoidance is implemented takeoff() can be called before disperse instead
         cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
         timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
         pos = np.array(posSet.pop())
-        cf.pose = pos.astype(float)        
+        cf.pose = pos.astype(float)
+        # Since each drone has it own origin as its initialPosition and the goal is wrt that
         cf.goTo(goal=scale2R(cf.pose-cf.initialPosition), yaw=0, duration=DISPERSE_DURATION)
         timeHelper.sleep(DISPERSE_DURATION + HOVER_DURATION)
 
+# Update the directions of the drones after dispersal such that bound is on their left
 def adjustDir(cfs):
     for cf in cfs:
         cf.sense()
@@ -57,7 +61,6 @@ def adjustDir(cfs):
             print("No wall near for drone id:",cf.id)
         # To adjust the case according to new Dir 
         cf.sense()
-        print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
 
 def updateMap(cfs):
     for cf in cfs:
@@ -75,6 +78,7 @@ def stopCondition(cfs):
             stopFlags.append(False)
     return np.asarray(stopFlags).all()
 
+# Decide the next move direction according to the case values
 def check(cfs):
     for cf in cfs:
         if cf.stop == False:
@@ -84,6 +88,7 @@ def check(cfs):
                     print("Drone id:",cf.id,"dir:",cf.dir,"move:",cf.move)
                     break
 
+# Find the goal position and direction according to the move command
 def move(cfs,timeHelper):
     dronePos = set()
 
@@ -100,6 +105,7 @@ def move(cfs,timeHelper):
             newDir = cf.remapDir(cf.move)
             cf.dir = cf.increment(cf.dir, newDir)
             
+            # To prevent 2 drones having the same goal positions
             prevLength = len(dronePos)
             dronePos.add(tuple(pos))
 
@@ -108,16 +114,19 @@ def move(cfs,timeHelper):
                 cf.goTo(goal=scale2R(cf.pose-cf.initialPosition), yaw=0, duration=MOVE_DURATION)
     timeHelper.sleep(MOVE_DURATION)
 
+# Takeoff didn't work when swarm.allcfs.takeoff() was used
 def takeoff(cfs, timeHelper):
     for cf in cfs:
         cf.takeoff(targetHeight=TAKEOFF_HEIGHT, duration=TAKEOFF_DURATION)
     timeHelper.sleep(TAKEOFF_DURATION + HOVER_DURATION)
 
+# Land didn't work when swarm.allcfs.land() was used
 def land(cfs, timeHelper):
     for cf in cfs:
         cf.land(targetHeight=LAND_HEIGHT, duration=LAND_DURATION)
     timeHelper.sleep(LAND_DURATION)
 
+# To stop the motors
 def stopSwarm(cfs):
     for cf in cfs:
         cf.cmdStop()
@@ -130,7 +139,6 @@ def main():
     timeHelper = swarm.timeHelper
     cfs = swarm.allcfs.crazyflies
 
-    # Takeoff didn't work when swarm.allcfs.takeoff() was used
     # takeoff(cfs, timeHelper)
     
     disperse(cfs, timeHelper)
@@ -159,6 +167,7 @@ def main():
             print("Attempting Task again")
             leftover = np.where(map == 0)
             leftover = [(float(leftover[0][i]), float(leftover[1][i]), 1.0) for i in range(len(leftover[0]))]
+            # Placing drones inside the failed part of the map and running the algorithm again
             if len(leftover) > 1:
                 cfs[0].stop, cfs[1].stop = False, False
                 cfs[0].goTo(goal=scale2R(leftover[0]-cfs[0].initialPosition), yaw=0, duration=MOVE_DURATION)
@@ -174,7 +183,6 @@ def main():
                 cfs[0].goTo(goal=scale2R(leftover[0]-cfs[0].initialPosition), yaw=0, duration=MOVE_DURATION)
                 timeHelper.sleep(MOVE_DURATION)
     
-    # Land did̈́n't work when swarm.allcfs.land() was used
     land(cfs, timeHelper)
     stopSwarm(cfs)
 
